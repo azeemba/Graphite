@@ -10,27 +10,36 @@
 #.client: visual=roundrect fill=lightgreen title=bold
 #.editor: fill=lightblue title=bold
 #.document: fill=darkorange title=bold
+#.kiln: fill=gold title=bold
 #.renderer: fill=gold title=bold
 
 // Clients and Core Libraries
 
 [<hdiagram> Clients and Core Libraries - Usage Overview|
-    [<client> Frontend Editor Client]
+    [<client> Stopgap Web Editor Client]
+    [<client> WASM wrapper]
+    [<client> Future Desktop Editor Client]
+    [<client> Headless Console]
     [<client> Headless Editor Client]
     [<client> Application Client
-    (like a game engine or game that renders .grd graphs at runtime)]
-    [<editor> Editor Core Library]
-    [<document> Document Core Library]
-    [<renderer> Renderer Core Library]
+    (like a game engine or game that renders .gda graphs at runtime)]
+    [<editor> Editor Backend]
+    [<document> Document Handler]
+    [<kiln> Kiln (Asset Graph Baker)]
+    [<renderer> Charcoal (Render Engine)]
     
-    [Frontend Editor Client] Depends On -> [Editor Core Library]
-    [Editor Core Library] Depends On -> [Document Core Library]
-    [Headless Editor Client] Depends On -> [Document Core Library]
-    [Document Core Library] Depends On -> [Renderer Core Library]
-    [Application Client] Depends On -> [Renderer Core Library]
+    [Stopgap Web Editor Client] Depends On -> [WASM wrapper]
+    [WASM wrapper] Depends On -> [Editor Backend]
+    [Future Desktop Editor Client] Depends On -> [Editor Backend]
+    [Headless Console] Depends On -> [Editor Backend]
+    [Editor Backend] Depends On -> [Document Handler]
+    [Headless Editor Client] Depends On -> [Document Handler]
+    [Document Handler] Depends On -> [Charcoal (Render Engine)]
+    [Application Client] Depends On -> [Charcoal (Render Engine)]
 ]
 
 [<vdiagram> Clients and Core Libraries - Major Modules|
+
   // Client
 
   [<client> Frontend Implementation|
@@ -96,10 +105,10 @@
       the previous operation if it's the same as this one and append partial
       updates to operations from in-progress interactive tools.
   ]
-  [Design Document Maintainer] -> Send Design Document Diff [Render Graph Maintainer]
+  [Design Document Maintainer] -> Send Design Document Diff [Digital Asset Maintainer]
   [Design Document Maintainer] <:-> Write Updated GDD [Open Documents File Store]
 
-  [<document> Render Graph Maintainer|
+  [<document> Digital Asset Maintainer|
       Bake operations into a complete graph including history references.
       Starting from the beginning of document history, each operation
       modifies the graph in a specific way. If an operation creates a node
@@ -107,17 +116,17 @@
       between the live graph and each additional history reference so
       changed nodes in history are "ghost variants" living in the live graph.
   ]
-  [Render Graph Maintainer] <:-> Write Updated GRD [Open Documents File Store]
-  [Render Graph Maintainer] -> Send Render Graph [Scheduler]
+  [Digital Asset Maintainer] <:-> Write Updated GDA [Open Documents File Store]
+  [Digital Asset Maintainer] -> Send Digital Asset [Scheduler]
 
   [<document>Open Documents File Store|
       Kept in-memory or written to disk.|
       For each open document:|
       [<state> Design Document (.gdd)]|
-      [<state> Render Graph (.grd)]
+      [<state> Digital Asset (.gda)]
   ]
 
-  // Renderer
+  // Charcoal
 
   [<renderer> Scheduler|
       Manage a thread pool and GPU time. Perform progressive enhancement
