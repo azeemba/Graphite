@@ -674,7 +674,7 @@ impl MessageHandler<DocumentMessage, &InputPreprocessor> for DocumentMessageHand
 				let selected_layers = selected_paths.iter().filter_map(|path| {
 					let layer = self.active_document().document.layer(path).unwrap();
 					let point = {
-						let bounding_box = layer.bounding_box(layer.transform, layer.style)?;
+						let bounding_box = layer.current_bounding_box()?;
 						match aggregate {
 							AlignAggregate::Min => bounding_box[0],
 							AlignAggregate::Max => bounding_box[1],
@@ -697,7 +697,7 @@ impl MessageHandler<DocumentMessage, &InputPreprocessor> for DocumentMessageHand
 						// TODO: Refactor with `reduce` and `merge_bounding_boxes` once the latter is added
 						let bounding_boxes = selected_paths.iter().filter_map(|path| {
 							let layer = self.active_document().document.layer(path).unwrap();
-							layer.bounding_box(layer.transform, layer.style)
+							layer.current_bounding_box()
 						});
 						let min = bounding_boxes
 							.clone()
