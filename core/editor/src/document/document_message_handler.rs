@@ -452,8 +452,8 @@ impl MessageHandler<DocumentMessage, &InputPreprocessor> for DocumentMessageHand
 					responses.push_back(DocumentOperation::DeleteLayer { path: vec![*id] }.into())
 				}
 			}
-			DispatchOperation(op) => {
-				if let Ok(Some(mut document_responses)) = self.active_document_mut().document.handle_operation(op) {
+			DispatchOperation(op) => match self.active_document_mut().document.handle_operation(op) {
+				Ok(Some(mut document_responses)) => {
 					let canvas_dirty = self.filter_document_responses(&mut document_responses);
 					responses.extend(
 						document_responses
@@ -464,13 +464,7 @@ impl MessageHandler<DocumentMessage, &InputPreprocessor> for DocumentMessageHand
 									self.active_document_mut().layer_data.remove(&path);
 									None
 								}
-								DocumentResponse::CreatedLayer { path } => {
-									if !self.active_document().document.work_mounted {
-										self.select_layer(&path)
-									} else {
-										None
-									}
-								}
+								DocumentResponse::CreatedLayer { path } => (!self.active_document().document.work_mounted).then(|| self.select_layer(&path)).flatten(),
 								DocumentResponse::DocumentChanged => unreachable!(),
 							})
 							.flatten(),
@@ -479,13 +473,18 @@ impl MessageHandler<DocumentMessage, &InputPreprocessor> for DocumentMessageHand
 						responses.push_back(RenderDocument.into())
 					}
 				}
+				Err(e) => log::error!("DocumentError: {:?}", e),
+				Ok(_) => (),
+			},
+			RenderDocument => {
+				log::debug!("rendering");
+				responses.push_back(
+					FrontendMessage::UpdateCanvas {
+						document: self.active_document_mut().document.render_root(),
+					}
+					.into(),
+				)
 			}
-			RenderDocument => responses.push_back(
-				FrontendMessage::UpdateCanvas {
-					document: self.active_document_mut().document.render_root(),
-				}
-				.into(),
-			),
 			TranslateCanvasBegin => {
 				self.translating = true;
 				self.mouse_pos = ipp.mouse.position;
